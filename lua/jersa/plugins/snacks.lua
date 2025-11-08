@@ -1,9 +1,10 @@
-add('folke/snacks.nvim')
-
-later(function()
-  require('snacks').setup({
+return {
+  "folke/snacks.nvim",
+  priority = 1000,
+  lazy = false,
+  opts = {
     dashboard = {
-      enabled = false,
+      enabled = true,
       preset = {
         header = [[
            _
@@ -15,7 +16,7 @@ later(function()
         ]],
         keys = {
           { icon = " ", key = "f", desc = "Find File", action = ":lua Snacks.dashboard.pick('files')" },
-          { icon = " ", key = "t", desc = "File Explorer", action = ":lua MiniFiles.open()" },
+          { icon = " ", key = "t", desc = "File Explorer", action = ":Triptych" },
           { icon = " ", key = "g", desc = "Find Text", action = ":lua Snacks.dashboard.pick('live_grep')" },
           { icon = " ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
           {
@@ -24,8 +25,8 @@ later(function()
             desc = "Config",
             action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})",
           },
-          { icon = " ", key = "s", desc = "Restore Session", action = ":lua MiniSessions.read('Session.vim')" },
-          { icon = "󰒲 ", key = "D", desc = "Deps", action = ":lua MiniDeps.update()" },
+          { icon = " ", key = "s", desc = "Restore Session", action = ":lua require('persistence').load()" },
+          { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
           { icon = " ", key = "q", desc = "Quit", action = ":qa" },
         },
       },
@@ -50,25 +51,30 @@ later(function()
       },
     },
     picker = {
+      enabled = true,
       layout = {
         fullscreen = false,
+        cycle = false,
+      },
+      layouts = {
+        },
       },
       source = {
         files = {
           exclude = {
-            "*.class",
+            "target",
           },
         },
       },
     },
     bigfile = { enabled = false },
     bufdelete = { enabled = false },
-    notifier = { enabled = false },
+    notifier = { enabled = true },
     debug = { enabled = false },
     git = { enabled = false },
     gitbrowse = { enabled = false },
-    lazygit = { enabled = false },
-    notify = { enabled = false },
+    lazygit = { enabled = true },
+    notify = { enabled = true },
     quickfile = { enabled = false },
     rename = { enabled = false },
     statuscolumn = { enabled = false },
@@ -76,68 +82,50 @@ later(function()
     toggle = { enabled = false },
     win = { enabled = false },
     words = { enabled = false },
-  })
+  keys = {
+    { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
+    { "<leader>/", function() Snacks.picker.grep() end, desc = "Grep (Root Dir)" },
+    { "<leader>:", function() Snacks.picker.command_history() end, desc = "Command History" },
 
+    -- find
+    { "<leader>fB", function() Snacks.picker.buffers({ hidden = true, nofile = true }) end, desc = "Buffers (all)" },
+    { "<leader>ff", function() Snacks.picker.files() end, desc = "Find Files (Root Dir)" },
+    { "<leader>fg", function() Snacks.picker.git_files() end, desc = "Find Files (git-files)" },
+    { "<leader>fR", function() Snacks.picker.recent({ filter = { cwd = true }}) end, desc = "Recent (cwd)" },
+    { "<leader>fp", function() Snacks.picker.projects() end, desc = "Projects" },
 
-  local map = vim.keymap.set
-  local opts = { silent = true }
+    -- git
+    { "<leader>gd", function() Snacks.picker.git_diff() end, desc = "Git Diff (hunks)" },
+    { "<leader>gD", function() Snacks.picker.git_diff({ base = "origin", group = true }) end, desc = "Git Diff (origin)" },
+    { "<leader>gs", function() Snacks.picker.git_status() end, desc = "Git Status" },
+    { "<leader>gS", function() Snacks.picker.git_stash() end, desc = "Git Stash" },
+    { "<leader>gi", function() Snacks.picker.gh_issue() end, desc = "GitHub Issues (open)" },
+    { "<leader>gI", function() Snacks.picker.gh_issue({ state = "all" }) end, desc = "GitHub Issues (all)" },
+    { "<leader>gp", function() Snacks.picker.gh_pr() end, desc = "GitHub Pull Requests (open)" },
+    { "<leader>gP", function() Snacks.picker.gh_pr({ state = "all" }) end, desc = "GitHub Pull Requests (all)" },
+    { "<leader>gg", function() require("snacks").lazygit() end, desc = "Lazygit" },
 
-  -- Top Pickers & Explorer
-  map("n", "<leader><space>", function() Snacks.picker.smart() end, vim.tbl_extend("force", opts, { desc = "Smart Find Files" }))
-  map("n", "<leader>,", function() Snacks.picker.buffers() end, vim.tbl_extend("force", opts, { desc = "Buffers" }))
-  map("n", "<leader>/", function() Snacks.picker.grep() end, vim.tbl_extend("force", opts, { desc = "Grep" }))
-  map("n", "<leader>:", function() Snacks.picker.command_history() end, vim.tbl_extend("force", opts, { desc = "Command History" }))
-  map("n", "<leader>n", function() Snacks.picker.notifications() end, vim.tbl_extend("force", opts, { desc = "Notification History" }))
+    -- Grep
+    { "<leader>sb", function() Snacks.picker.lines() end, desc = "Buffer Lines" },
+    { "<leader>sB", function() Snacks.picker.grep_buffers() end, desc = "Grep Open Buffers" },
+    { "<leader>sp", function() Snacks.picker.lazy() end, desc = "Search for Plugin Spec" },
 
-  -- Find
-  map("n", "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, { desc = "Find Config File" })
-  map("n", "<leader>ff", function() Snacks.picker.files() end, { desc = "Find Files" })
-  map("n", "<leader>fg", function() Snacks.picker.git_files() end, { desc = "Find Git Files" })
-  map("n", "<leader>fp", function() Snacks.picker.projects() end, { desc = "Projects" })
-  map("n", "<leader>fr", function() Snacks.picker.recent() end, { desc = "Recent Files" })
-
-  -- Git
-  map("n", "<leader>gb", function() Snacks.picker.git_branches() end, { desc = "Git Branches" })
-  map("n", "<leader>gl", function() Snacks.picker.git_log() end, { desc = "Git Log" })
-  map("n", "<leader>gL", function() Snacks.picker.git_log_line() end, { desc = "Git Log Line" })
-  map("n", "<leader>gs", function() Snacks.picker.git_status() end, { desc = "Git Status" })
-  map("n", "<leader>gS", function() Snacks.picker.git_stash() end, { desc = "Git Stash" })
-  map("n", "<leader>gd", function() Snacks.picker.git_diff() end, { desc = "Git Diff (Hunks)" })
-  map("n", "<leader>gf", function() Snacks.picker.git_log_file() end, { desc = "Git Log File" })
-
-  -- GitHub
-  map("n", "<leader>gi", function() Snacks.picker.gh_issue() end, { desc = "GitHub Issues (open)" })
-  map("n", "<leader>gI", function() Snacks.picker.gh_issue({ state = "all" }) end, { desc = "GitHub Issues (all)" })
-  map("n", "<leader>gp", function() Snacks.picker.gh_pr() end, { desc = "GitHub PRs (open)" })
-  map("n", "<leader>gP", function() Snacks.picker.gh_pr({ state = "all" }) end, { desc = "GitHub PRs (all)" })
-
-  -- Grep
-  map("n", "<leader>sb", function() Snacks.picker.lines() end, { desc = "Buffer Lines" })
-  map("n", "<leader>sB", function() Snacks.picker.grep_buffers() end, { desc = "Grep Open Buffers" })
-  map({ "n", "x" }, "<leader>sw", function() Snacks.picker.grep_word() end, { desc = "Visual selection or word" })
-
-  -- Search
-  map("n", '<leader>s"', function() Snacks.picker.registers() end, { desc = "Registers" })
-  map("n", '<leader>s/', function() Snacks.picker.search_history() end, { desc = "Search History" })
-  map("n", "<leader>sa", function() Snacks.picker.autocmds() end, { desc = "Autocmds" })
-  map("n", "<leader>sb", function() Snacks.picker.lines() end, { desc = "Buffer Lines" })
-  map("n", "<leader>sc", function() Snacks.picker.command_history() end, { desc = "Command History" })
-  map("n", "<leader>sC", function() Snacks.picker.commands() end, { desc = "Commands" })
-  map("n", "<leader>sd", function() Snacks.picker.diagnostics() end, { desc = "Diagnostics" })
-  map("n", "<leader>sD", function() Snacks.picker.diagnostics_buffer() end, { desc = "Buffer Diagnostics" })
-  map("n", "<leader>sh", function() Snacks.picker.help() end, { desc = "Help Pages" })
-  map("n", "<leader>sH", function() Snacks.picker.highlights() end, { desc = "Highlights" })
-  map("n", "<leader>si", function() Snacks.picker.icons() end, { desc = "Icons" })
-  map("n", "<leader>sj", function() Snacks.picker.jumps() end, { desc = "Jumps" })
-  map("n", "<leader>sk", function() Snacks.picker.keymaps() end, { desc = "Keymaps" })
-  map("n", "<leader>sl", function() Snacks.picker.loclist() end, { desc = "Location List" })
-  map("n", "<leader>sm", function() Snacks.picker.marks() end, { desc = "Marks" })
-  map("n", "<leader>sM", function() Snacks.picker.man() end, { desc = "Man Pages" })
-  map("n", "<leader>sp", function() Snacks.picker.lazy() end, { desc = "Search for Plugin Spec" })
-  map("n", "<leader>sq", function() Snacks.picker.qflist() end, { desc = "Quickfix List" })
-  map("n", "<leader>sR", function() Snacks.picker.resume() end, { desc = "Resume" })
-  map("n", "<leader>su", function() Snacks.picker.undo() end, { desc = "Undo History" })
-
-end)
-
-
+    -- search
+    { '<leader>s"', function() Snacks.picker.registers() end, desc = "Registers" },
+    { '<leader>s/', function() Snacks.picker.search_history() end, desc = "Search History" },
+    { "<leader>sC", function() Snacks.picker.commands() end, desc = "Commands" },
+    { "<leader>sd", function() Snacks.picker.diagnostics() end, desc = "Diagnostics" },
+    { "<leader>sD", function() Snacks.picker.diagnostics_buffer() end, desc = "Buffer Diagnostics" },
+    { "<leader>sh", function() Snacks.picker.help() end, desc = "Help Pages" },
+    { "<leader>sH", function() Snacks.picker.highlights() end, desc = "Highlights" },
+    { "<leader>si", function() Snacks.picker.icons() end, desc = "Icons" },
+    { "<leader>sj", function() Snacks.picker.jumps() end, desc = "Jumps" },
+    { "<leader>sk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
+    { "<leader>sl", function() Snacks.picker.loclist() end, desc = "Location List" },
+    { "<leader>sM", function() Snacks.picker.man() end, desc = "Man Pages" },
+    { "<leader>sm", function() Snacks.picker.marks() end, desc = "Marks" },
+    { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume" },
+    { "<leader>sq", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
+    { "<leader>su", function() Snacks.picker.undo() end, desc = "Undotree" },
+  }
+}

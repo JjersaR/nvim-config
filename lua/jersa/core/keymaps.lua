@@ -68,3 +68,14 @@ vim.keymap.set("i", "<A-k>", "<Esc>:m .-2<CR>==gi", { silent = true })
 -- Visual Mode
 vim.keymap.set("v", "<A-j>", ":m '>+1<CR>gv=gv", { silent = true })
 vim.keymap.set("v", "<A-k>", ":m '<-2<CR>gv=gv", { silent = true })
+
+-- lsp
+-- Toggle LSP diagnostics visibility
+local isLspDiagnosticsVisible = true
+vim.keymap.set("n", "<leader>cx", function()
+    isLspDiagnosticsVisible = not isLspDiagnosticsVisible
+    vim.diagnostic.config({
+        virtual_text = isLspDiagnosticsVisible,
+        underline = isLspDiagnosticsVisible
+    })
+end, { desc = "Toggle LSP diagnostics" })
