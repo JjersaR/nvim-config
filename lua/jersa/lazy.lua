@@ -13,7 +13,8 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
 	{ import = "jersa.plugins" },
-	-- { import = "jersa.plugins.lsp" },
+	{ import = "jersa.plugins.lsp" },
+	{ import = "lsp.configs.java" },
 }, {
 	checker = {
 		enabled = true,
